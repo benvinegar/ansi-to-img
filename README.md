@@ -38,5 +38,7 @@ Current MVP supports:
 - SGR colors (`30-37`, `90-97`, `40-47`, `100-107`)
 - reset/bold styles
 - newline/carriage return
+- real font rendering through `canvas`
+- Unicode text rendering, including box drawing and other non-ASCII glyphs when supported by installed fonts
 
 It renders the final terminal state to a PNG image.

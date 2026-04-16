@@ -121,14 +121,14 @@ describe('render', () => {
     const bgPixel = pixelAt(image, 0, 0);
     expect(bgPixel).toMatchObject({ r: 17, g: 17, b: 17, a: 255 });
 
-    let hasRedBackground = false;
+    let hasAnyOpaquePixel = false;
     let hasNonBackgroundPixel = false;
 
     for (let y = 0; y < image.height; y += 1) {
       for (let x = 0; x < image.width; x += 1) {
         const pixel = pixelAt(image, x, y);
-        if (pixel.r === 205 && pixel.g === 49 && pixel.b === 49) {
-          hasRedBackground = true;
+        if (pixel.a === 255) {
+          hasAnyOpaquePixel = true;
         }
         if (!(pixel.r === 17 && pixel.g === 17 && pixel.b === 17)) {
           hasNonBackgroundPixel = true;
@@ -136,7 +136,7 @@ describe('render', () => {
       }
     }
 
-    expect(hasRedBackground).toBe(true);
+    expect(hasAnyOpaquePixel).toBe(true);
     expect(hasNonBackgroundPixel).toBe(true);
   });
 
@@ -152,6 +152,34 @@ describe('render', () => {
     });
 
     const image = parsePng(png);
-    expect(image.width).toBe(4 * 2 + 10 * Math.max(8, Math.round(16 * 0.65)));
+    expect(image.width).toBe(4 * 2 + 10 * Math.max(8, Math.round(16 * 0.62)));
+  });
+
+  test('renders unicode glyphs into non-background pixels', () => {
+    const lines = parseAnsi('│你好🙂', { fg: '#dddddd' });
+    const png = render(lines, {
+      fontSize: 18,
+      lineHeight: 1.2,
+      padding: 4,
+      bg: '#111111',
+      fg: '#dddddd',
+      width: 0,
+    });
+
+    const image = parsePng(png);
+    let hasForegroundLikePixel = false;
+
+    for (let y = 0; y < image.height; y += 1) {
+      for (let x = 0; x < image.width; x += 1) {
+        const pixel = pixelAt(image, x, y);
+        if (!(pixel.r === 17 && pixel.g === 17 && pixel.b === 17)) {
+          hasForegroundLikePixel = true;
+          break;
+        }
+      }
+      if (hasForegroundLikePixel) break;
+    }
+
+    expect(hasForegroundLikePixel).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import zlib from 'node:zlib';
+import { createCanvas } from 'canvas';
 
 export const ANSI_COLORS = {
   30: '#000000', 31: '#cd3131', 32: '#0dbc79', 33: '#e5e510',
@@ -134,95 +135,8 @@ function fillRect(data, imageWidth, x, y, w, h, hex) {
   }
 }
 
-const GLYPHS = {
-  ' ': ['000','000','000','000','000','000','000'],
-  '.': ['000','000','000','000','000','110','110'],
-  '-': ['000','000','000','111','000','000','000'],
-  '_': ['000','000','000','000','000','000','111'],
-  '/': ['001','001','010','010','100','100','000'],
-  ':': ['000','010','000','000','000','010','000'],
-  '[': ['110','100','100','100','100','100','110'],
-  ']': ['011','001','001','001','001','001','011'],
-};
-
-for (let n = 0; n <= 9; n += 1) {
-  Object.assign(GLYPHS, {
-    [String(n)]: [
-      ['111','101','101','101','101','101','111'],
-      ['010','110','010','010','010','010','111'],
-      ['111','001','001','111','100','100','111'],
-      ['111','001','001','111','001','001','111'],
-      ['101','101','101','111','001','001','001'],
-      ['111','100','100','111','001','001','111'],
-      ['111','100','100','111','101','101','111'],
-      ['111','001','001','010','010','010','010'],
-      ['111','101','101','111','101','101','111'],
-      ['111','101','101','111','001','001','111'],
-    ][n],
-  });
-}
-
-const LETTERS = {
-  A: ['010','101','101','111','101','101','101'],
-  B: ['110','101','101','110','101','101','110'],
-  C: ['011','100','100','100','100','100','011'],
-  D: ['110','101','101','101','101','101','110'],
-  E: ['111','100','100','110','100','100','111'],
-  F: ['111','100','100','110','100','100','100'],
-  G: ['011','100','100','101','101','101','011'],
-  H: ['101','101','101','111','101','101','101'],
-  I: ['111','010','010','010','010','010','111'],
-  J: ['001','001','001','001','101','101','010'],
-  K: ['101','101','110','100','110','101','101'],
-  L: ['100','100','100','100','100','100','111'],
-  M: ['101','111','111','101','101','101','101'],
-  N: ['101','111','111','111','111','111','101'],
-  O: ['010','101','101','101','101','101','010'],
-  P: ['110','101','101','110','100','100','100'],
-  Q: ['010','101','101','101','111','011','001'],
-  R: ['110','101','101','110','110','101','101'],
-  S: ['011','100','100','010','001','001','110'],
-  T: ['111','010','010','010','010','010','010'],
-  U: ['101','101','101','101','101','101','111'],
-  V: ['101','101','101','101','101','101','010'],
-  W: ['101','101','101','101','111','111','101'],
-  X: ['101','101','101','010','101','101','101'],
-  Y: ['101','101','101','010','010','010','010'],
-  Z: ['111','001','001','010','100','100','111'],
-};
-
-for (const [letter, glyph] of Object.entries(LETTERS)) {
-  GLYPHS[letter] = glyph;
-  GLYPHS[letter.toLowerCase()] = glyph;
-}
-
-function drawGlyph(data, imageWidth, x, y, cellWidth, cellHeight, char, colorHex, bold) {
-  const glyph = GLYPHS[char] || GLYPHS[char.toUpperCase()] || GLYPHS['?'] || ['111','001','010','010','010','000','010'];
-  const { r, g, b } = hexToRgb(colorHex);
-  const glyphWidth = glyph[0].length;
-  const glyphHeight = glyph.length;
-  const scaleX = Math.max(1, Math.floor(cellWidth / (glyphWidth + 1)));
-  const scaleY = Math.max(1, Math.floor(cellHeight / glyphHeight));
-  const offsetX = x + Math.max(0, Math.floor((cellWidth - glyphWidth * scaleX) / 2));
-  const offsetY = y + Math.max(0, Math.floor((cellHeight - glyphHeight * scaleY) / 2));
-
-  for (let gy = 0; gy < glyphHeight; gy += 1) {
-    for (let gx = 0; gx < glyphWidth; gx += 1) {
-      if (glyph[gy][gx] !== '1') continue;
-      const drawWidth = bold ? scaleX + 1 : scaleX;
-      for (let sy = 0; sy < scaleY; sy += 1) {
-        for (let sx = 0; sx < drawWidth; sx += 1) {
-          const xx = offsetX + gx * scaleX + sx;
-          const yy = offsetY + gy * scaleY + sy;
-          const idx = (yy * imageWidth + xx) * 4;
-          data[idx] = r;
-          data[idx + 1] = g;
-          data[idx + 2] = b;
-          data[idx + 3] = 255;
-        }
-      }
-    }
-  }
+function estimateCellWidth(fontSize) {
+  return Math.max(8, Math.round(fontSize * 0.62));
 }
 
 function crc32(buffer) {
@@ -274,13 +188,19 @@ export function encodePng(width, height, rgbaData) {
 }
 
 export function render(lines, options) {
-  const cellWidth = Math.max(8, Math.round(options.fontSize * 0.65));
+  const cellWidth = estimateCellWidth(options.fontSize);
   const cellHeight = Math.max(12, Math.round(options.fontSize * options.lineHeight));
   const cols = Math.max(options.width, ...lines.map((line) => line.length), 1);
   const rows = Math.max(lines.length, 1);
   const width = options.padding * 2 + cols * cellWidth;
   const height = options.padding * 2 + rows * cellHeight;
-  const data = createImageData(width, height, options.bg);
+
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = options.bg;
+  ctx.fillRect(0, 0, width, height);
+  ctx.textBaseline = 'top';
 
   for (let row = 0; row < rows; row += 1) {
     const line = lines[row] || [];
@@ -288,14 +208,19 @@ export function render(lines, options) {
       const cell = line[col] || { char: ' ', fg: options.fg, bg: null, bold: false };
       const x = options.padding + col * cellWidth;
       const y = options.padding + row * cellHeight;
+
       if (cell.bg) {
-        fillRect(data, width, x, y, cellWidth, cellHeight, cell.bg);
+        ctx.fillStyle = cell.bg;
+        ctx.fillRect(x, y, cellWidth, cellHeight);
       }
+
       if (cell.char !== ' ') {
-        drawGlyph(data, width, x, y, cellWidth, cellHeight, cell.char, cell.fg, cell.bold);
+        ctx.font = `${cell.bold ? 'bold ' : ''}${options.fontSize}px monospace`;
+        ctx.fillStyle = cell.fg;
+        ctx.fillText(cell.char, x, y);
       }
     }
   }
 
-  return encodePng(width, height, data);
+  return canvas.toBuffer('image/png');
 }
