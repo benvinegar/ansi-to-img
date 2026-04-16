@@ -1,0 +1,26 @@
+{
+  "name": "ansi-to-img",
+  "version": "0.1.0",
+  "description": "CLI to convert ANSI terminal output into PNG images",
+  "type": "module",
+  "bin": {
+    "ansi-to-img": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:smoke": "printf '\u001b[31mred\u001b[0m\\n' | node src/cli.js -o out.png"
+  },
+  "keywords": [
+    "ansi",
+    "terminal",
+    "png",
+    "cli",
+    "image"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
