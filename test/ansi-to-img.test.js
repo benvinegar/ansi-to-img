@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import zlib from 'node:zlib';
-import { createImageData, encodePng, hexToRgb, parseAnsi, render } from '../src/lib.js';
+import { ansi256ToHex, createImageData, encodePng, hexToRgb, parseAnsi, render } from '../src/lib.js';
 
 function parsePng(buffer) {
   expect(buffer.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
@@ -71,6 +71,16 @@ describe('parseAnsi', () => {
     expect(lines[0][0]).toMatchObject({ char: 'A', bg: '#2472c8', bold: true });
   });
 
+  test('supports 256-color foreground/background', () => {
+    const lines = parseAnsi('\u001b[38;5;208;48;5;17mX', { fg: '#dddddd' });
+    expect(lines[0][0]).toMatchObject({ char: 'X', fg: '#ff8700', bg: '#00005f' });
+  });
+
+  test('supports truecolor foreground/background', () => {
+    const lines = parseAnsi('\u001b[38;2;12;34;56;48;2;200;210;220mY', { fg: '#dddddd' });
+    expect(lines[0][0]).toMatchObject({ char: 'Y', fg: '#0c2238', bg: '#c8d2dc' });
+  });
+
   test('handles cursor positioning', () => {
     const lines = parseAnsi('ab\u001b[2;3Hc', { fg: '#dddddd' });
     expect(lines[0].map((cell) => cell.char).join('')).toBe('ab');
@@ -87,6 +97,12 @@ describe('png helpers', () => {
   test('hexToRgb converts hex colors', () => {
     expect(hexToRgb('#abc')).toEqual({ r: 170, g: 187, b: 204 });
     expect(hexToRgb('#123456')).toEqual({ r: 18, g: 52, b: 86 });
+  });
+
+  test('ansi256ToHex converts xterm 256-color codes', () => {
+    expect(ansi256ToHex(16)).toBe('#000000');
+    expect(ansi256ToHex(208)).toBe('#ff8700');
+    expect(ansi256ToHex(244)).toBe('#808080');
   });
 
   test('createImageData fills background', () => {

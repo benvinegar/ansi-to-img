@@ -35,7 +35,9 @@ ansi-to-img session.ansi -o output.png
 ## Notes
 
 Current MVP supports:
-- SGR colors (`30-37`, `90-97`, `40-47`, `100-107`)
+- standard SGR colors (`30-37`, `90-97`, `40-47`, `100-107`)
+- 256-color ANSI (`38;5;<n>` / `48;5;<n>`)
+- truecolor ANSI (`38;2;<r>;<g>;<b>` / `48;2;<r>;<g>;<b>`)
 - reset/bold styles
 - newline/carriage return
 - real font rendering through `canvas`

@@ -12,6 +12,72 @@ export const ANSI_COLORS = {
   104: '#3b8eea', 105: '#d670d6', 106: '#29b8db', 107: '#ffffff',
 };
 
+function rgbToHex(r, g, b) {
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+export function ansi256ToHex(code) {
+  if (code < 0 || code > 255 || Number.isNaN(code)) return null;
+
+  if (code < 16) {
+    const table = [
+      '#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
+      '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff',
+    ];
+    return table[code];
+  }
+
+  if (code >= 16 && code <= 231) {
+    const index = code - 16;
+    const r = Math.floor(index / 36);
+    const g = Math.floor((index % 36) / 6);
+    const b = index % 6;
+    const levels = [0, 95, 135, 175, 215, 255];
+    return rgbToHex(levels[r], levels[g], levels[b]);
+  }
+
+  const level = 8 + (code - 232) * 10;
+  return rgbToHex(level, level, level);
+}
+
+function applySgrCodes(codes, state, defaults) {
+  for (let index = 0; index < codes.length; index += 1) {
+    const code = codes[index];
+
+    if (code === 0) state = { fg: defaults.fg, bg: null, bold: false };
+    else if (code === 1) state.bold = true;
+    else if (code === 22) state.bold = false;
+    else if (code === 39) state.fg = defaults.fg;
+    else if (code === 49) state.bg = null;
+    else if (ANSI_COLORS[code]) {
+      if ((code >= 30 && code <= 37) || (code >= 90 && code <= 97)) state.fg = ANSI_COLORS[code];
+      if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) state.bg = ANSI_COLORS[code];
+    } else if (code === 38 || code === 48) {
+      const mode = codes[index + 1];
+      if (mode === 5) {
+        const color = ansi256ToHex(codes[index + 2]);
+        if (color) {
+          if (code === 38) state.fg = color;
+          else state.bg = color;
+        }
+        index += 2;
+      } else if (mode === 2) {
+        const r = codes[index + 2];
+        const g = codes[index + 3];
+        const b = codes[index + 4];
+        if ([r, g, b].every((value) => Number.isInteger(value) && value >= 0 && value <= 255)) {
+          const color = rgbToHex(r, g, b);
+          if (code === 38) state.fg = color;
+          else state.bg = color;
+        }
+        index += 4;
+      }
+    }
+  }
+
+  return state;
+}
+
 export function parseAnsi(input, defaults) {
   const lines = [[]];
   let row = 0;
@@ -51,17 +117,7 @@ export function parseAnsi(input, defaults) {
 
       if (command === 'm') {
         const codes = values.length ? values : [0];
-        for (const code of codes) {
-          if (code === 0) state = { fg: defaults.fg, bg: null, bold: false };
-          else if (code === 1) state.bold = true;
-          else if (code === 22) state.bold = false;
-          else if (code === 39) state.fg = defaults.fg;
-          else if (code === 49) state.bg = null;
-          else if (ANSI_COLORS[code]) {
-            if ((code >= 30 && code <= 37) || (code >= 90 && code <= 97)) state.fg = ANSI_COLORS[code];
-            if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) state.bg = ANSI_COLORS[code];
-          }
-        }
+        state = applySgrCodes(codes, state, defaults);
       } else if (command === 'K') {
         lines[row] = lines[row].slice(0, col);
       } else if (command === 'H' || command === 'f') {
