@@ -7,12 +7,13 @@ import {
   hexToRgb,
   parseAnsi,
   render,
-} from "../src/lib.js";
+} from "../src/lib.ts";
 
-/**
- * @param {Buffer} buffer
- */
-function parsePng(buffer) {
+function parsePng(buffer: Buffer): {
+  width: number;
+  height: number;
+  rgba: Buffer;
+} {
   expect(buffer.subarray(0, 8)).toEqual(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   );
@@ -20,7 +21,7 @@ function parsePng(buffer) {
   let offset = 8;
   let width = 0;
   let height = 0;
-  const idatChunks = [];
+  const idatChunks: Buffer[] = [];
 
   while (offset < buffer.length) {
     const length = buffer.readUInt32BE(offset);
@@ -55,26 +56,24 @@ function parsePng(buffer) {
   return { width, height, rgba };
 }
 
-/**
- * @param {{ width: number, rgba: Buffer }} image
- * @param {number} x
- * @param {number} y
- */
-function pixelAt(image, x, y) {
+function pixelAt(
+  image: { width: number; rgba: Buffer },
+  x: number,
+  y: number,
+): { r: number; g: number; b: number; a: number } {
   const idx = (y * image.width + x) * 4;
   return {
-    r: image.rgba[idx],
-    g: image.rgba[idx + 1],
-    b: image.rgba[idx + 2],
-    a: image.rgba[idx + 3],
+    r: image.rgba[idx]!,
+    g: image.rgba[idx + 1]!,
+    b: image.rgba[idx + 2]!,
+    a: image.rgba[idx + 3]!,
   };
 }
 
-/**
- * @param {{ width: number, height: number, rgba: Buffer }} image
- * @param {(pixel: { r: number, g: number, b: number, a: number }) => boolean} predicate
- */
-function hasPixel(image, predicate) {
+function hasPixel(
+  image: { width: number; height: number; rgba: Buffer },
+  predicate: (pixel: { r: number; g: number; b: number; a: number }) => boolean,
+): boolean {
   for (let y = 0; y < image.height; y += 1) {
     for (let x = 0; x < image.width; x += 1) {
       if (predicate(pixelAt(image, x, y))) return true;
@@ -87,23 +86,27 @@ describe("parseAnsi", () => {
   test("parses plain text into cells", () => {
     const lines = parseAnsi("abc", { fg: "#dddddd" });
     expect(lines).toHaveLength(1);
-    expect(lines[0].map((cell) => cell.char).join("")).toBe("abc");
+    expect(lines[0]!.map((cell) => cell.char).join("")).toBe("abc");
   });
 
   test("applies foreground color and reset", () => {
     const lines = parseAnsi("\u001B[31mr\u001B[0mx", { fg: "#dddddd" });
-    expect(lines[0][0]).toMatchObject({ char: "r", fg: "#cd3131" });
-    expect(lines[0][1]).toMatchObject({ char: "x", fg: "#dddddd" });
+    expect(lines[0]![0]).toMatchObject({ char: "r", fg: "#cd3131" });
+    expect(lines[0]![1]).toMatchObject({ char: "x", fg: "#dddddd" });
   });
 
   test("applies background color and bold", () => {
     const lines = parseAnsi("\u001B[44;1mA", { fg: "#dddddd" });
-    expect(lines[0][0]).toMatchObject({ char: "A", bg: "#2472c8", bold: true });
+    expect(lines[0]![0]).toMatchObject({
+      char: "A",
+      bg: "#2472c8",
+      bold: true,
+    });
   });
 
   test("supports 256-color foreground/background", () => {
     const lines = parseAnsi("\u001B[38;5;208;48;5;17mX", { fg: "#dddddd" });
-    expect(lines[0][0]).toMatchObject({
+    expect(lines[0]![0]).toMatchObject({
       char: "X",
       fg: "#ff8700",
       bg: "#00005f",
@@ -114,7 +117,7 @@ describe("parseAnsi", () => {
     const lines = parseAnsi("\u001B[38;2;12;34;56;48;2;200;210;220mY", {
       fg: "#dddddd",
     });
-    expect(lines[0][0]).toMatchObject({
+    expect(lines[0]![0]).toMatchObject({
       char: "Y",
       fg: "#0c2238",
       bg: "#c8d2dc",
@@ -123,13 +126,13 @@ describe("parseAnsi", () => {
 
   test("handles cursor positioning", () => {
     const lines = parseAnsi("ab\u001B[2;3Hc", { fg: "#dddddd" });
-    expect(lines[0].map((cell) => cell.char).join("")).toBe("ab");
-    expect(lines[1][2]).toMatchObject({ char: "c" });
+    expect(lines[0]!.map((cell) => cell.char).join("")).toBe("ab");
+    expect(lines[1]![2]).toMatchObject({ char: "c" });
   });
 
   test("handles erase to end of line", () => {
     const lines = parseAnsi("abcd\rxy\u001B[K", { fg: "#dddddd" });
-    expect(lines[0].map((cell) => cell.char).join("")).toBe("xy");
+    expect(lines[0]!.map((cell) => cell.char).join("")).toBe("xy");
   });
 });
 

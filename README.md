@@ -2,7 +2,7 @@
 
 Convert ANSI terminal output into PNG images from the command line.
 
-A small Node CLI for turning terminal output with ANSI escape sequences into shareable screenshots.
+A small Node TypeScript CLI for turning terminal output with ANSI escape sequences into shareable screenshots.
 
 ## CLI design
 
@@ -22,6 +22,7 @@ Examples:
 printf '\x1b[31mred\x1b[0m\n' | ansi-to-img -o out.png
 my-program | ansi-to-img -o output.png
 ansi-to-img session.ansi -o output.png
+printf '\x1b[31mred\x1b[0m\n' | node --experimental-strip-types src/cli.ts -o out.png
 ```
 
 ### Options
@@ -70,6 +71,7 @@ npm run format
 npm run lint
 npm run typecheck
 npm test
+npm start -- --help
 ```
 
 ## License

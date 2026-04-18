@@ -17,3 +17,8 @@ export type RenderOptions = {
   fg: string;
   width: number;
 };
+
+export type CliOptions = RenderOptions & {
+  output: string;
+  input: string | null;
+};

@@ -3,25 +3,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { parseAnsi, render } from "./lib.js";
+import { parseAnsi, render } from "./lib.ts";
+import type { CliOptions } from "./types.ts";
 
-/**
- * @typedef {import('./types.d.ts').RenderOptions & { output: string, input: string | null }} CliOptions
- */
-
-function printHelp() {
+function printHelp(): void {
   console.log(
     `ansi-to-img\n\nUsage:\n  ansi-to-img [input-file] -o out.png [options]\n\nOptions:\n  -o, --output <file>       Output PNG path\n  --font-size <px>          Font size in pixels (default: 16)\n  --line-height <factor>    Line height multiplier (default: 1.2)\n  --padding <px>            Padding in pixels (default: 16)\n  --bg <color>              Background color (default: #111111)\n  --fg <color>              Default foreground color (default: #dddddd)\n  --width <chars>           Minimum terminal width in character cells\n  -h, --help                Show help\n`,
   );
 }
 
-/**
- * @param {string[]} argv
- * @returns {CliOptions}
- */
-function parseArgs(argv) {
-  /** @type {CliOptions} */
-  const options = {
+function parseArgs(argv: string[]): CliOptions {
+  const options: CliOptions = {
     output: "",
     fontSize: 16,
     lineHeight: 1.2,
@@ -63,14 +55,10 @@ function parseArgs(argv) {
     throw new Error("Missing required --output");
   }
 
-  return /** @type {CliOptions} */ ({ ...options, output: options.output });
+  return options;
 }
 
-/**
- * @param {string | null} inputPath
- * @returns {string}
- */
-function readInput(inputPath) {
+function readInput(inputPath: string | null): string {
   if (inputPath) {
     return fs.readFileSync(path.resolve(inputPath), "utf8");
   }
@@ -84,7 +72,7 @@ function readInput(inputPath) {
   return fs.readFileSync(0, "utf8");
 }
 
-function main() {
+function main(): void {
   try {
     const options = parseArgs(process.argv.slice(2));
     const input = readInput(options.input);

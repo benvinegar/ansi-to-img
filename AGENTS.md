@@ -2,13 +2,13 @@
 
 ## Project
 
-`ansi-to-img` is a Node-based CLI that converts ANSI terminal output into PNG images.
+`ansi-to-img` is a Node-based TypeScript CLI that converts ANSI terminal output into PNG images.
 
 ## Key entry points
 
-- `src/cli.js` — command-line interface and argument parsing.
-- `src/lib.js` — ANSI parsing and PNG rendering logic.
-- `test/ansi-to-img.test.js` — Vitest coverage for parsing/rendering helpers.
+- `src/cli.ts` — command-line interface and argument parsing.
+- `src/lib.ts` — ANSI parsing and PNG rendering logic.
+- `test/ansi-to-img.test.ts` — Vitest coverage for parsing/rendering helpers.
 - `scripts/*.sh` — manual terminal and rendering validation scripts.
 
 ## Architecture
@@ -22,6 +22,7 @@
 
 - Keep the CLI dependency surface small.
 - Prefer incremental ANSI support over large parser rewrites.
+- Use Node's `--experimental-strip-types` execution mode for local CLI runs instead of adding a build step.
 - Preserve the existing Node + npm setup unless a migration is explicitly requested.
 - Do not commit generated files from `out/` or ad-hoc image artifacts.
 

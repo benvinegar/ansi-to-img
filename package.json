@@ -4,7 +4,7 @@
   "description": "CLI to convert ANSI terminal output into PNG images",
   "type": "module",
   "bin": {
-    "ansi-to-img": "./src/cli.js"
+    "ansi-to-img": "./src/cli.ts"
   },
   "files": [
     "src",
@@ -24,7 +24,7 @@
     "url": "https://github.com/benvinegar/ansi-to-img/issues"
   },
   "scripts": {
-    "start": "node src/cli.js",
+    "start": "node --experimental-strip-types src/cli.ts",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint . --import-plugin -D correctness -D suspicious -A max-lines -A max-lines-per-function -A max-depth -A unicorn/prefer-math-trunc",
@@ -33,7 +33,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "test:smoke": "printf '\u001b[31mred\u001b[0m\\n' | node src/cli.js -o out.png",
+    "test:smoke": "printf '\u001b[31mred\u001b[0m\\n' | node --experimental-strip-types src/cli.ts -o out.png",
     "test:terminal": "bash ./scripts/test-terminal-output.sh",
     "test:basic": "bash ./scripts/test-basic-ansi.sh",
     "test:256": "bash ./scripts/test-256color.sh",
@@ -46,7 +46,7 @@
     "pre-commit": "npx lint-staged"
   },
   "lint-staged": {
-    "*.{js,json,md,yml,yaml}": [
+    "*.{ts,js,json,md,yml,yaml}": [
       "oxfmt",
       "oxlint --fix -A max-lines -A max-lines-per-function -A max-depth -A unicorn/prefer-math-trunc"
     ]
