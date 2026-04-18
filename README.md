@@ -1,6 +1,8 @@
 # ansi-to-img
 
-Convert ANSI terminal output into an image from the command line.
+Convert ANSI terminal output into PNG images from the command line.
+
+A small Node CLI for turning terminal output with ANSI escape sequences into shareable screenshots.
 
 ## CLI design
 
@@ -44,3 +46,32 @@ Current MVP supports:
 - Unicode text rendering, including box drawing and other non-ASCII glyphs when supported by installed fonts
 
 It renders the final terminal state to a PNG image.
+
+## Manual test scripts
+
+These scripts are useful when testing over SSH or validating terminal/color support manually.
+
+```bash
+npm run test:terminal   # print ANSI/Unicode directly to your terminal
+npm run test:basic      # generate a basic ANSI PNG
+npm run test:256        # generate a 256-color PNG
+npm run test:truecolor  # generate a truecolor PNG
+npm run test:unicode    # generate a Unicode PNG
+npm run test:manual     # run all manual scripts
+```
+
+Generated files are written to `out/`.
+
+## Development
+
+```bash
+npm install
+npm run format
+npm run lint
+npm run typecheck
+npm test
+```
+
+## License
+
+MIT

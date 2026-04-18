@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "max-depth": "off",
+    "unicorn/prefer-math-trunc": "off"
+  }
+}

@@ -6,11 +6,50 @@
   "bin": {
     "ansi-to-img": "./src/cli.js"
   },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@10",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benvinegar/ansi-to-img.git"
+  },
+  "homepage": "https://github.com/benvinegar/ansi-to-img",
+  "bugs": {
+    "url": "https://github.com/benvinegar/ansi-to-img/issues"
+  },
   "scripts": {
     "start": "node src/cli.js",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint . --import-plugin -D correctness -D suspicious -A max-lines -A max-lines-per-function -A max-depth -A unicorn/prefer-math-trunc",
+    "lint:fix": "oxlint . --fix",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:smoke": "printf '\u001b[31mred\u001b[0m\\n' | node src/cli.js -o out.png"
+    "coverage": "vitest run --coverage",
+    "test:smoke": "printf '\u001b[31mred\u001b[0m\\n' | node src/cli.js -o out.png",
+    "test:terminal": "bash ./scripts/test-terminal-output.sh",
+    "test:basic": "bash ./scripts/test-basic-ansi.sh",
+    "test:256": "bash ./scripts/test-256color.sh",
+    "test:truecolor": "bash ./scripts/test-truecolor.sh",
+    "test:unicode": "bash ./scripts/test-unicode.sh",
+    "test:manual": "bash ./scripts/test-all.sh",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,json,md,yml,yaml}": [
+      "oxfmt",
+      "oxlint --fix -A max-lines -A max-lines-per-function -A max-depth -A unicorn/prefer-math-trunc"
+    ]
   },
   "keywords": [
     "ansi",
@@ -21,6 +60,11 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^24.5.2",
+    "oxfmt": "^0.5.0",
+    "oxlint": "^1.17.0",
+    "simple-git-hooks": "^2.13.1",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "dependencies": {
